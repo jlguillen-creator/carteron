@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html class="dark" lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no" name="viewport"/>
+<title>Sovereign Ledger</title>
+<meta name="theme-color" content="#0b1326"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="apple-mobile-web-app-title" content="Sovereign Ledger"/>
+<link rel="manifest" href="manifest.json"/>
+<link rel="icon" type="image/png" sizes="512x512" href="icon-512.png"/>
+<link rel="apple-touch-icon" href="icon-512.png"/>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<style>
+:root{--pri:#7bd0ff;--pri-c:#001a27;--on-pri:#00354a;--ter:#4ae176;--ter-c:#001d07;--err:#ffb4ab;--err-c:#93000a;--on-err-c:#ffdad6;--bg:#0b1326;--sc-low:#131b2e;--sc:#171f33;--sc-hi:#222a3d;--sc-top:#2d3449;--s-bri:#31394d;--on-s:#dae2fd;--on-sv:#c6c6cd;--outl:#909097;--outl-v:#45464d;--sec-c:#3e495d;--on-sec-c:#aeb9d0}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-tap-highlight-color:transparent;overscroll-behavior:none}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--on-s);min-height:100dvh;overflow-x:hidden;-webkit-font-smoothing:antialiased}
+.fh{font-family:'Manrope',sans-serif}
+.mi{font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24;vertical-align:middle}
+
+/* === SCREENS === */
+.screen{display:none;opacity:0;transform:translateY(10px);transition:opacity .3s,transform .3s;padding:84px 16px 96px;max-width:960px;margin:0 auto}
+.screen.active{display:block}.screen.visible{opacity:1;transform:translateY(0)}
+
+/* === TOP BAR === */
+.topbar{position:fixed;top:0;left:0;right:0;z-index:100;height:60px;display:flex;align-items:center;justify-content:space-between;padding:0 18px;background:rgba(11,19,38,.88);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);box-shadow:0 4px 20px rgba(0,0,0,.4)}
+.topbar__brand{font-family:'Manrope';font-weight:900;font-size:1.05rem;letter-spacing:-.03em;color:var(--pri);text-transform:uppercase}
+.topbar__btn{color:var(--pri);cursor:pointer;padding:8px;border-radius:50%;background:none;border:none;display:flex;align-items:center}
+.topbar__btn:active{transform:scale(.9)}
+
+/* === BOTTOM NAV === */
+.bnav{position:fixed;bottom:0;left:0;right:0;z-index:100;display:flex;justify-content:space-around;align-items:center;padding:10px 12px calc(10px + env(safe-area-inset-bottom));background:rgba(11,19,38,.92);backdrop-filter:blur(32px);-webkit-backdrop-filter:blur(32px);box-shadow:0 -8px 32px rgba(0,0,0,.5);border-radius:16px 16px 0 0}
+.ni{display:flex;flex-direction:column;align-items:center;padding:5px 14px;border-radius:12px;cursor:pointer;transition:all .2s;color:var(--outl-v);background:transparent;border:none;font-family:'Inter';-webkit-user-select:none}
+.ni:active{transform:scale(.9)}
+.ni.active{color:var(--pri);background:var(--sc-top)}
+.ni .material-symbols-outlined{font-size:22px;margin-bottom:1px}
+.ni.active .material-symbols-outlined{font-variation-settings:'FILL' 1,'wght' 400,'GRAD' 0,'opsz' 24}
+.ni span:last-child{font-size:9px;font-weight:500}
+
+/* === UTILITIES === */
+.tg{color:var(--ter)}.tr{color:var(--err)}.tm{color:var(--on-sv)}
+.stit{font-family:'Manrope';font-size:1.7rem;font-weight:800;letter-spacing:-.03em;margin-bottom:4px}
+.ssub{color:var(--on-sv);font-size:.85rem;margin-bottom:24px}
+.badge{display:inline-block;padding:2px 7px;border-radius:5px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.08em}
+.bg{background:var(--ter-c);color:var(--ter)}.bb{background:var(--pri-c);color:var(--pri)}.br{background:var(--err-c);color:var(--on-err-c)}
+.last-up{text-align:center;font-size:10px;color:var(--outl);padding:18px 0 6px}
+
+/* === HERO === */
+.hero-val{font-family:'Manrope';font-size:clamp(2rem,7vw,3rem);font-weight:800;letter-spacing:-.04em;line-height:1}
+.hero-val .c{color:var(--on-sv);font-size:.55em}
+.pill{display:inline-flex;align-items:center;gap:3px;padding:3px 10px;border-radius:999px;font-size:.78rem;font-weight:700}
+.pill.up{background:var(--ter-c);color:var(--ter)}
+.pill.dn{background:var(--err-c);color:var(--on-err-c)}
+
+/* === POSITION CARDS === */
+.pgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:22px}
+.pcard{background:var(--sc-top);border-radius:14px;padding:13px;transition:background .2s}
+.pcard:active{background:var(--s-bri)}
+.av{width:30px;height:30px;border-radius:50%;background:var(--sc-low);display:flex;align-items:center;justify-content:center;font-family:'Manrope';font-weight:700;font-size:9px;color:var(--pri);flex-shrink:0}
+.mchart{display:flex;align-items:flex-end;gap:1px;width:44px;height:18px}
+.mchart div{flex:1;border-radius:1px}
+.plbar{height:3px;border-radius:3px;margin-top:5px;overflow:hidden;background:rgba(255,255,255,.05)}
+.plbar div{height:100%;border-radius:3px}
+
+/* === WATCHLIST TABLE === */
+.wt{background:var(--sc-low);border-radius:14px;overflow:hidden}
+.wth{display:grid;grid-template-columns:2.2fr 1fr 1fr .8fr;padding:10px 12px;background:var(--sc);font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--on-sv)}
+.wtr{display:grid;grid-template-columns:2.2fr 1fr 1fr .8fr;padding:11px 12px;align-items:center;border-bottom:1px solid rgba(69,70,77,.06)}
+
+/* === BENTO === */
+.bgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:22px}
+@media(min-width:520px){.bgrid{grid-template-columns:1fr 1fr 1fr}}
+.bcard{background:var(--sc-top);border-radius:14px;padding:16px;display:flex;flex-direction:column;justify-content:space-between;min-height:120px;overflow:hidden}
+
+/* === TIMELINE === */
+.tl{position:relative;padding-left:34px}
+.tl::before{content:'';position:absolute;left:24px;top:0;bottom:0;width:2px;background:var(--sc-top)}
+.tld{margin-bottom:26px}
+.tldh{display:flex;align-items:center;gap:12px;margin-bottom:12px;margin-left:-34px}
+.tlc{width:46px;height:46px;border-radius:50%;background:var(--sc-top);border:3px solid var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:2;flex-shrink:0}
+.ecard{background:var(--sc-low);border-radius:12px;padding:13px;margin-bottom:8px}
+
+/* === INSIDERS TABLE === */
+.itable{width:100%;border-collapse:collapse;text-align:left}
+.itable thead th{padding-bottom:10px;font-size:8px;text-transform:uppercase;letter-spacing:.1em;color:var(--on-sv);font-weight:500;border-bottom:1px solid rgba(69,70,77,.2)}
+.itable tbody td{padding:9px 2px;font-size:.75rem;border-bottom:1px solid rgba(69,70,77,.06)}
+
+/* === ALLOC RING === */
+.aw{display:flex;align-items:center;gap:16px}
+.ar{position:relative;width:90px;height:90px;flex-shrink:0}
+.ar svg{width:100%;height:100%;transform:rotate(-90deg)}
+.ar__l{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700}
+
+/* === SENTIMENT BAR === */
+.sbar{height:7px;width:100%;background:var(--sc-low);border-radius:999px;overflow:hidden}
+.sbar div{height:100%;background:var(--ter);border-radius:999px}
+
+/* === DATA MODE BANNER === */
+.mode-banner{background:var(--sec-c);color:var(--on-sec-c);padding:8px 14px;border-radius:10px;font-size:.75rem;font-weight:600;margin-bottom:18px;display:flex;align-items:center;gap:8px}
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<header class="topbar">
+  <span class="topbar__brand">Sovereign Ledger</span>
+  <div style="display:flex;gap:2px">
+    <button class="topbar__btn" id="keyBtn" title="API Key"><span class="material-symbols-outlined mi" style="font-size:20px">key</span></button>
+    <button class="topbar__btn" id="modeBtn" title="Toggle data mode"><span class="material-symbols-outlined mi" style="font-size:20px">science</span></button>
+    <button class="topbar__btn" id="refreshBtn" title="Refresh"><span class="material-symbols-outlined mi" style="font-size:20px">sync</span></button>
+  </div>
+</header>
+
+<!-- API KEY MODAL -->
+<div id="keyModal" style="position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.7);display:none;align-items:center;justify-content:center;padding:20px">
+  <div style="background:var(--sc-hi);border-radius:18px;padding:24px 20px;max-width:380px;width:100%;box-shadow:0 16px 64px rgba(0,0,0,.6)">
+    <h2 class="fh" style="font-weight:800;font-size:1.2rem;margin-bottom:6px">🔑 API Key</h2>
+    <p class="tm" style="font-size:.8rem;line-height:1.4;margin-bottom:16px">Introduce tu API key de <a href="https://site.financialmodelingprep.com/register" target="_blank" style="color:var(--pri)">Financial Modeling Prep</a> (gratis, 250 calls/día). Se guarda en tu dispositivo.</p>
+    <input id="keyInput" style="width:100%;padding:10px 14px;border-radius:10px;border:1px solid var(--outl-v);background:rgba(6,14,32,.6);color:var(--on-s);font-size:.85rem;outline:none;margin-bottom:12px;font-family:'Inter'" placeholder="Tu API key de FMP..." type="text"/>
+    <div style="display:flex;gap:8px">
+      <button id="keySave" style="flex:1;padding:10px;border:none;border-radius:10px;background:var(--pri);color:var(--on-pri);font-weight:700;font-size:.85rem;cursor:pointer">Guardar</button>
+      <button id="keyClose" style="padding:10px 16px;border:none;border-radius:10px;background:var(--sc-top);color:var(--on-sv);font-weight:600;font-size:.85rem;cursor:pointer">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ DASHBOARD ═══ -->
+<div class="screen active" id="screen-dashboard">
+  <div id="modeBannerDash"></div>
+  <div style="margin-bottom:22px">
+    <p class="tm" style="font-size:9px;text-transform:uppercase;letter-spacing:.12em;font-weight:600">Valor Total Cartera</p>
+    <h2 class="hero-val" id="tvEur">—</h2>
+    <div style="display:flex;align-items:center;gap:8px;margin-top:10px;flex-wrap:wrap">
+      <span class="pill up" id="tvPill">—</span>
+      <span class="tm" style="font-size:.75rem" id="tvPL">—</span>
+    </div>
+  </div>
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+    <h3 class="fh" style="font-size:.95rem;font-weight:700">Posiciones</h3>
+    <span style="color:var(--pri);font-size:.72rem;font-weight:600;cursor:pointer" onclick="navigateTo('watchlist')">Ver Watchlist →</span>
+  </div>
+  <div class="pgrid" id="posGrid"></div>
+  <h3 class="fh" style="font-size:.95rem;font-weight:700;margin-bottom:10px">Distribución</h3>
+  <div style="background:rgba(6,14,32,.6);border:1px solid rgba(69,70,77,.1);border-radius:14px;padding:16px;margin-bottom:10px">
+    <div class="aw" id="allocW"></div>
+  </div>
+  <div class="last-up" id="upDash"></div>
+</div>
+
+<!-- ═══ WATCHLIST ═══ -->
+<div class="screen" id="screen-watchlist">
+  <div id="modeBannerWL"></div>
+  <h1 class="stit">Market Watch</h1>
+  <p class="ssub">Precios en EUR · Trade Republic</p>
+  <div class="bgrid" id="bentoG"></div>
+  <div class="wt">
+    <div class="wth"><div>Activo</div><div style="text-align:right">Precio</div><div style="text-align:right">Var. Día</div><div style="text-align:right">P&L</div></div>
+    <div id="wlRows"></div>
+  </div>
+  <div class="last-up" id="upWL"></div>
+</div>
+
+<!-- ═══ EVENTS ═══ -->
+<div class="screen" id="screen-events">
+  <div id="modeBannerEv"></div>
+  <h1 class="stit">Eventos</h1>
+  <p class="ssub">Calendario de earnings próximos.</p>
+  <div id="evTL"></div>
+  <div class="last-up" id="upEv"></div>
+</div>
+
+<!-- ═══ INSIDERS ═══ -->
+<div class="screen" id="screen-insiders">
+  <div id="modeBannerIns"></div>
+  <h1 class="stit">Insiders</h1>
+  <p class="ssub">Actividad insider reciente.</p>
+  <div id="insC"></div>
+  <div class="last-up" id="upIns"></div>
+</div>
+
+<!-- BOTTOM NAV -->
+<nav class="bnav">
+  <button class="ni active" data-screen="dashboard"><span class="material-symbols-outlined mi">dashboard</span><span>Dashboard</span></button>
+  <button class="ni" data-screen="watchlist"><span class="material-symbols-outlined mi">visibility</span><span>Watchlist</span></button>
+  <button class="ni" data-screen="events"><span class="material-symbols-outlined mi">event_note</span><span>Events</span></button>
+  <button class="ni" data-screen="insiders"><span class="material-symbols-outlined mi">group</span><span>Insiders</span></button>
+</nav>
+
+<script>
+(function(){
+'use strict';
+
+/* ═══════════════════════════════════════════
+   PORTFOLIO — Posiciones reales de transacciones.csv
+   ═══════════════════════════════════════════ */
+const P=[
+  {t:'BILL', n:'Bill Holdings',       sec:'Fintech',    sh:7.912020, buys:[{s:4.744958,p:42.15},{s:3.167062,p:31.58}]},
+  {t:'MELI', n:'MercadoLibre',        sec:'E-commerce', sh:0.08281,  buys:[{s:0.05553,p:1800.80},{s:0.02728,p:1832.80}]},
+  {t:'FLNC', n:'Fluence Energy',      sec:'Energía',    sh:12.578616,buys:[{s:12.578616,p:15.98}]},
+  {t:'AMZN', n:'Amazon',              sec:'Tech',       sh:0.296841, buys:[{s:0.296841,p:168.44}]},
+  {t:'GPRE', n:'Green Plains',        sec:'Energía',    sh:4.28449,  buys:[{s:4.28449,p:11.67}]},
+  {t:'ISRG', n:'Intuitive Surgical',  sec:'Salud',      sh:0.121506, buys:[{s:0.121506,p:411.50}]},
+  {t:'BRK-B',n:'Berkshire Hathaway',  sec:'Financiero', sh:0.118539, buys:[{s:0.118539,p:421.80}]},
+  {t:'AVGO', n:'Broadcom',            sec:'Tech',       sh:0.18044,  buys:[{s:0.18044,p:277.10}]},
+  {t:'MNST', n:'Monster Beverage',    sec:'Consumo',    sh:0.724322, buys:[{s:0.724322,p:69.03}]},
+  {t:'AGED.L',n:'iShares Ageing Pop.',sec:'ETF',        sh:17.919564,buys:[{s:11.899095,p:8.40},{s:6.020469,p:8.31}]},
+];
+P.forEach(p=>{const tc=p.buys.reduce((s,b)=>s+b.s*b.p,0);p.avg=tc/p.sh;p.inv=tc});
+
+/* ═══════════════════════════════════════════
+   MOCK DATA — Precios realistas en USD (AGED.L en GBX)
+   ═══════════════════════════════════════════ */
+const MOCK_QUOTES={
+  'BILL':  {symbol:'BILL', price:78.45,  changesPercentage:2.34, change:1.79,  marketCap:9200000000},
+  'MELI':  {symbol:'MELI', price:2145.30,changesPercentage:1.12, change:23.80, marketCap:108000000000},
+  'FLNC':  {symbol:'FLNC', price:15.22,  changesPercentage:-3.41,change:-0.54, marketCap:2800000000},
+  'AMZN':  {symbol:'AMZN', price:198.75, changesPercentage:0.87, change:1.72,  marketCap:2070000000000},
+  'GPRE':  {symbol:'GPRE', price:8.93,   changesPercentage:-5.12,change:-0.48, marketCap:580000000},
+  'ISRG':  {symbol:'ISRG', price:512.80, changesPercentage:1.45, change:7.32,  marketCap:182000000000},
+  'BRK-B': {symbol:'BRK-B',price:478.20, changesPercentage:0.32, change:1.52,  marketCap:1050000000000},
+  'AVGO':  {symbol:'AVGO', price:218.40, changesPercentage:-1.15,change:-2.54, marketCap:1010000000000},
+  'MNST':  {symbol:'MNST', price:58.12,  changesPercentage:0.65, change:0.38,  marketCap:56000000000},
+  'AGED.L':{symbol:'AGED.L',price:862.50,changesPercentage:0.28, change:2.40,  marketCap:450000000},
+};
+
+const MOCK_EVENTS=[
+  {symbol:'AMZN',date:'2026-04-24',epsEstimated:1.38,revenueEstimated:155200000000,time:'amc'},
+  {symbol:'AVGO',date:'2026-03-27',epsEstimated:1.52,revenueEstimated:14800000000,time:'amc'},
+  {symbol:'ISRG',date:'2026-04-15',epsEstimated:1.84,revenueEstimated:2280000000,time:'amc'},
+  {symbol:'MELI',date:'2026-05-05',epsEstimated:9.42,revenueEstimated:5600000000,time:'bmo'},
+  {symbol:'BILL',date:'2026-05-01',epsEstimated:0.58,revenueEstimated:362000000,time:'amc'},
+  {symbol:'MNST',date:'2026-05-08',epsEstimated:0.45,revenueEstimated:1980000000,time:'bmo'},
+  {symbol:'GPRE',date:'2026-05-12',epsEstimated:-0.32,revenueEstimated:680000000,time:'bmo'},
+  {symbol:'FLNC',date:'2026-05-07',epsEstimated:-0.08,revenueEstimated:580000000,time:'amc'},
+];
+
+const MOCK_INSIDERS=[
+  {reportingName:'René Lacerte',symbol:'BILL',transactionDate:'2026-03-10',acquistionOrDisposition:'D',typeOfOwner:'CEO',securitiesTransacted:15000},
+  {reportingName:'Marcos Galperin',symbol:'MELI',transactionDate:'2026-03-05',acquistionOrDisposition:'D',typeOfOwner:'CEO & Founder',securitiesTransacted:8500},
+  {reportingName:'Gary Dickerson',symbol:'ISRG',transactionDate:'2026-02-28',acquistionOrDisposition:'A',typeOfOwner:'Director',securitiesTransacted:2000},
+  {reportingName:'Andrew Jassy',symbol:'AMZN',transactionDate:'2026-02-25',acquistionOrDisposition:'D',typeOfOwner:'CEO',securitiesTransacted:25000},
+  {reportingName:'Charlie Munger III',symbol:'BRK-B',transactionDate:'2026-02-20',acquistionOrDisposition:'A',typeOfOwner:'Director',securitiesTransacted:500},
+  {reportingName:'Hock Tan',symbol:'AVGO',transactionDate:'2026-02-18',acquistionOrDisposition:'D',typeOfOwner:'CEO',securitiesTransacted:12000},
+  {reportingName:'Todd Becker',symbol:'GPRE',transactionDate:'2026-02-15',acquistionOrDisposition:'A',typeOfOwner:'CEO',securitiesTransacted:45000},
+  {reportingName:'Hilton Schlosberg',symbol:'MNST',transactionDate:'2026-02-10',acquistionOrDisposition:'D',typeOfOwner:'Co-CEO',securitiesTransacted:30000},
+  {reportingName:'Julian Nebreda',symbol:'FLNC',transactionDate:'2026-02-08',acquistionOrDisposition:'A',typeOfOwner:'CEO',securitiesTransacted:18000},
+  {reportingName:'Manuel Perez',symbol:'BILL',transactionDate:'2026-01-28',acquistionOrDisposition:'A',typeOfOwner:'CFO',securitiesTransacted:5000},
+  {reportingName:'David Vélez',symbol:'MELI',transactionDate:'2026-01-20',acquistionOrDisposition:'D',typeOfOwner:'Board Member',securitiesTransacted:3200},
+  {reportingName:'Brian Miller',symbol:'AMZN',transactionDate:'2026-01-15',acquistionOrDisposition:'D',typeOfOwner:'SVP',securitiesTransacted:8000},
+];
+
+/* ═══════════════════════════════════════════
+   STATE
+   ═══════════════════════════════════════════ */
+let API_KEY=localStorage.getItem('sl_apikey')||'';
+let useMock = API_KEY?localStorage.getItem('sl_mock')!=='false':true; // mock ON if no key
+let quotes={}, events=[], insiders=[];
+let eurUsd=1.082, gbpEur=1.175;
+
+/* ═══════════════════════════════════════════
+   NAVIGATION
+   ═══════════════════════════════════════════ */
+const SIDS=['dashboard','watchlist','events','insiders'];
+const navB=document.querySelectorAll('.ni');
+const scr={};SIDS.forEach(i=>scr[i]=document.getElementById('screen-'+i));
+function navigateTo(id){
+  if(!scr[id])return;
+  navB.forEach(n=>n.classList.remove('active'));
+  SIDS.forEach(s=>{
+    if(s!==id){scr[s].classList.remove('visible');scr[s].classList.remove('active')}
+  });
+  document.querySelector(`[data-screen="${id}"]`)?.classList.add('active');
+  scr[id].classList.add('active');
+  requestAnimationFrame(()=>requestAnimationFrame(()=>scr[id].classList.add('visible')));
+  window.scrollTo({top:0,behavior:'instant'});
+  localStorage.setItem('sl_scr',id);
+}
+window.navigateTo=navigateTo;
+navB.forEach(b=>b.addEventListener('click',()=>navigateTo(b.dataset.screen)));
+const initS=localStorage.getItem('sl_scr')||'dashboard';
+scr[initS].classList.add('active','visible');
+navB.forEach(n=>n.classList.remove('active'));
+document.querySelector(`[data-screen="${initS}"]`)?.classList.add('active');
+
+/* ═══════════════════════════════════════════
+   HELPERS
+   ═══════════════════════════════════════════ */
+const FMP='https://financialmodelingprep.com/stable';
+async function api(ep){const s=ep.includes('?')?'&':'?';const r=await fetch(`${FMP}${ep}${s}apikey=${API_KEY}`);if(!r.ok)throw new Error(`HTTP ${r.status} en ${ep}`);return r.json()}
+
+function toEur(usd){return usd/eurUsd}
+function gbxToEur(gbx){return(gbx/100)*gbpEur}
+function prEur(t,raw){return t==='AGED.L'?gbxToEur(raw):toEur(raw)}
+const f=(n,d=2)=>n==null||isNaN(n)?'—':n.toLocaleString('de-DE',{minimumFractionDigits:d,maximumFractionDigits:d});
+const fe=n=>n!=null&&!isNaN(n)?f(n)+' €':'—';
+const pc=v=>v>=0?'tg':'tr';
+const ps=v=>(v>=0?'+':'')+f(v)+'%';
+function stamps(){
+  const now=new Date().toLocaleString('es-ES',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
+  ['upDash','upWL','upEv','upIns'].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent='Última actualización: '+now});
+}
+
+function modeBanner(){
+  const html=useMock?'<div class="mode-banner"><span class="material-symbols-outlined mi" style="font-size:16px">science</span> Datos de prueba — Pulsa 🧪 para conectar API real</div>':'<div class="mode-banner" style="background:var(--ter-c);color:var(--ter)"><span class="material-symbols-outlined mi" style="font-size:16px">cloud_done</span> Datos en vivo — FMP API</div>';
+  ['modeBannerDash','modeBannerWL','modeBannerEv','modeBannerIns'].forEach(id=>{const e=document.getElementById(id);if(e)e.innerHTML=html});
+}
+
+function enriched(){
+  return P.map(p=>{
+    const q=quotes[p.t]||{};
+    const cur=prEur(p.t,q.price||0);
+    const val=cur*p.sh;
+    const pl=val-p.inv;
+    const plp=p.inv?((val/p.inv)-1)*100:0;
+    const dc=q.changesPercentage||0;
+    return {...p,q,cur,val,pl,plp,dc};
+  });
+}
+
+/* ═══════════════════════════════════════════
+   DATA LOADING
+   ═══════════════════════════════════════════ */
+function loadMock(){
+  quotes={...MOCK_QUOTES};
+  events=[...MOCK_EVENTS];
+  insiders=[...MOCK_INSIDERS];
+  stamps();modeBanner();renderAll();
+}
+
+async function loadAPI(){
+  try{
+    // FX
+    try{const fx=await api('/quote?symbol=EURUSD');const d=Array.isArray(fx)?fx[0]:fx;if(d?.price)eurUsd=d.price}catch(e){console.warn('FX:',e)}
+    try{const gx=await api('/quote?symbol=GBPEUR');const d=Array.isArray(gx)?gx[0]:gx;if(d?.price)gbpEur=d.price}catch(e){console.warn('GBP:',e)}
+
+    // Quotes — try batch first, fallback to individual
+    const tks=P.filter(p=>!p.t.includes('.')).map(p=>p.t).join(',');
+    try{
+      const uq=await api(`/batch-quote?symbols=${tks}`);
+      if(Array.isArray(uq))uq.forEach(q=>{if(q.symbol)quotes[q.symbol]=q});
+    }catch(e){
+      console.warn('Batch failed, trying individual:',e);
+      for(const p of P){
+        if(p.t.includes('.'))continue;
+        try{const r=await api(`/quote?symbol=${p.t}`);const d=Array.isArray(r)?r[0]:r;if(d?.symbol)quotes[d.symbol]=d}catch(e2){console.warn(p.t,e2)}
+      }
+    }
+
+    // AGED.L
+    try{const aq=await api('/quote?symbol=AGED.L');const d=Array.isArray(aq)?aq[0]:aq;if(d?.symbol)quotes['AGED.L']=d}catch(e){console.warn('AGED:',e)}
+
+    // Earnings
+    const d0=new Date(),d1=new Date(d0);d1.setDate(d1.getDate()+90);
+    try{
+      const ev=await api(`/earning-calendar?from=${d0.toISOString().slice(0,10)}&to=${d1.toISOString().slice(0,10)}`);
+      if(Array.isArray(ev)){const tks=new Set(P.map(p=>p.t));events=ev.filter(e=>tks.has(e.symbol))}
+    }catch(e){console.warn('Events:',e);events=MOCK_EVENTS} // fallback
+
+    // Insiders
+    try{
+      let all=[];
+      for(const p of P){if(p.t.includes('.'))continue;try{const r=await api(`/insider-trading?symbol=${p.t}&limit=5`);if(Array.isArray(r))all=all.concat(r)}catch(e){}}
+      insiders=all.length?all.sort((a,b)=>new Date(b.transactionDate||0)-new Date(a.transactionDate||0)):MOCK_INSIDERS;
+    }catch(e){console.warn('Ins:',e);insiders=MOCK_INSIDERS}
+
+    stamps();modeBanner();renderAll();
+  }catch(e){
+    console.error('API error, falling back to mock:',e);
+    useMock=true;localStorage.setItem('sl_mock','true');
+    loadMock();
+  }
+}
+
+function refresh(){
+  if(useMock)loadMock();else loadAPI();
+}
+
+/* ═══════════════════════════════════════════
+   RENDER: DASHBOARD
+   ═══════════════════════════════════════════ */
+function renderDash(){
+  const data=enriched();
+  const tVal=data.reduce((s,d)=>s+d.val,0);
+  const tInv=data.reduce((s,d)=>s+d.inv,0);
+  const tPL=tVal-tInv;
+  const tPLp=tInv?((tVal/tInv)-1)*100:0;
+  const avgD=tVal?data.reduce((s,d)=>s+d.dc*(d.val/tVal),0):0;
+
+  document.getElementById('tvEur').innerHTML=fe(tVal).replace('€','<span class="c">€</span>');
+  const pill=document.getElementById('tvPill');
+  pill.className='pill '+(avgD>=0?'up':'dn');
+  pill.innerHTML=`<span class="material-symbols-outlined mi" style="font-size:14px;font-variation-settings:'FILL' 1">${avgD>=0?'trending_up':'trending_down'}</span>${ps(avgD)} hoy`;
+  document.getElementById('tvPL').innerHTML=`P&L: <span class="${pc(tPL)}" style="font-weight:700">${tPL>=0?'+':''}${fe(tPL)}</span> (${ps(tPLp)})`;
+
+  // Position cards
+  const sorted=[...data].sort((a,b)=>b.val-a.val);
+  document.getElementById('posGrid').innerHTML=sorted.map(d=>{
+    const up=d.plp>=0;const col=up?'74,225,118':'255,180,171';
+    return `<div class="pcard"><div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:7px"><div style="display:flex;align-items:center;gap:6px"><div class="av">${d.t.replace(/[-\.L]/g,'').slice(0,2)}</div><div><p class="fh" style="font-weight:700;font-size:.78rem">${d.t.replace('-B','')}</p><p style="font-size:8px" class="tm">${d.n}</p></div></div><span class="${pc(d.dc)}" style="font-weight:700;font-size:.68rem">${ps(d.dc)}</span></div>
+    <div style="display:flex;justify-content:space-between;align-items:flex-end"><div><p class="fh" style="font-size:1rem;font-weight:700">${fe(d.val)}</p><p style="font-size:8px" class="tm">${f(d.sh,2)} × ${fe(d.cur)}</p></div><div class="mchart"><div style="height:${up?50:100}%;background:rgba(${col},.2)"></div><div style="height:${up?66:75}%;background:rgba(${col},.3)"></div><div style="height:${up?80:50}%;background:rgba(${col},.45)"></div><div style="height:${up?100:33}%;background:rgba(${col},.6)"></div></div></div>
+    <div class="plbar"><div style="width:${Math.min(100,Math.abs(d.plp)*2)}%;background:${up?'var(--ter)':'var(--err)'}"></div></div>
+    <p style="font-size:8px;margin-top:3px;font-weight:600" class="${pc(d.plp)}">P&L: ${d.pl>=0?'+':''}${fe(d.pl)} (${ps(d.plp)})</p></div>`;
+  }).join('');
+
+  // Sector ring
+  const sec={};data.forEach(d=>{sec[d.sec]=(sec[d.sec]||0)+d.val});
+  const tV=data.reduce((s,d)=>s+d.val,0);
+  const sArr=Object.entries(sec).sort((a,b)=>b[1]-a[1]);
+  const cols=['var(--pri)','var(--ter)','var(--err)','var(--on-sec-c)','#009542','#7bd0ff','#bcc7de'];
+  const C=2*Math.PI*38;let off=0,circ='',leg='';
+  sArr.forEach(([s,v],i)=>{const pct=v/tV,dash=C*pct;circ+=`<circle cx="45" cy="45" r="38" fill="transparent" stroke="${cols[i%cols.length]}" stroke-width="7" stroke-dasharray="${dash} ${C-dash}" stroke-dashoffset="${-off}"/>`;off+=dash;leg+=`<div style="display:flex;justify-content:space-between;font-size:.75rem"><span><span style="width:8px;height:8px;border-radius:50%;background:${cols[i%cols.length]};display:inline-block;margin-right:6px"></span>${s}</span><span style="font-weight:700">${Math.round(pct*100)}%</span></div>`});
+  document.getElementById('allocW').innerHTML=`<div class="ar"><svg viewBox="0 0 90 90"><circle cx="45" cy="45" r="38" fill="transparent" stroke="var(--sc-top)" stroke-width="7"/>${circ}</svg><div class="ar__l">${P.length}</div></div><div style="flex:1;display:flex;flex-direction:column;gap:5px">${leg}</div>`;
+}
+
+/* ═══════════════════════════════════════════
+   RENDER: WATCHLIST
+   ═══════════════════════════════════════════ */
+function renderWL(){
+  const data=enriched();
+  const best=[...data].sort((a,b)=>b.dc-a.dc)[0];
+  const worst=[...data].sort((a,b)=>a.dc-b.dc)[0];
+  const bestPL=[...data].sort((a,b)=>b.plp-a.plp)[0];
+  document.getElementById('bentoG').innerHTML=`
+    <div class="bcard" style="background:linear-gradient(135deg,rgba(0,29,7,.3),transparent)"><div><p style="font-size:8px;text-transform:uppercase;letter-spacing:.12em;font-weight:700" class="tm">Top Día</p><h2 class="fh" style="font-size:1rem;font-weight:700;color:var(--pri);margin-top:2px">${best.n}</h2></div><span class="fh tg" style="font-size:1.3rem;font-weight:800">${ps(best.dc)}</span></div>
+    <div class="bcard" style="border-left:3px solid var(--err)"><div><p style="font-size:8px;text-transform:uppercase;letter-spacing:.12em;font-weight:700" class="tm">Peor Día</p><h2 class="fh" style="font-size:1rem;font-weight:700;margin-top:2px">${worst.n}</h2></div><span class="fh tr" style="font-size:1.3rem;font-weight:800">${ps(worst.dc)}</span></div>
+    <div class="bcard"><div><p style="font-size:8px;text-transform:uppercase;letter-spacing:.12em;font-weight:700" class="tm">Mejor P&L</p><h2 class="fh" style="font-size:1rem;font-weight:700;margin-top:2px">${bestPL.n}</h2></div><span class="fh tg" style="font-size:1.3rem;font-weight:800">${ps(bestPL.plp)}</span></div>`;
+
+  const sorted=[...data].sort((a,b)=>b.val-a.val);
+  document.getElementById('wlRows').innerHTML=sorted.map(d=>`<div class="wtr"><div style="display:flex;align-items:center;gap:7px"><div class="av">${d.t.replace(/[-\.L]/g,'').slice(0,2)}</div><div><div style="font-weight:700;font-size:.75rem">${d.n}</div><div style="font-size:8px" class="tm">${d.t} · ${f(d.sh,2)}</div></div></div><div style="text-align:right;font-family:'Manrope';font-weight:700;font-size:.78rem">${fe(d.cur)}</div><div style="text-align:right;font-weight:700;font-size:.72rem" class="${pc(d.dc)}">${ps(d.dc)}</div><div style="text-align:right;font-weight:700;font-size:.72rem" class="${pc(d.plp)}">${ps(d.plp)}</div></div>`).join('');
+}
+
+/* ═══════════════════════════════════════════
+   RENDER: EVENTS
+   ═══════════════════════════════════════════ */
+function renderEv(){
+  const el=document.getElementById('evTL');
+  if(!events.length){el.innerHTML='<div style="text-align:center;padding:36px" class="tm"><span class="material-symbols-outlined mi" style="font-size:40px;display:block;margin-bottom:8px">event_busy</span>No hay eventos próximos.</div>';return}
+  const grp={};events.forEach(e=>{const d=e.date||'?';if(!grp[d])grp[d]=[];grp[d].push(e)});
+  const today=new Date().toISOString().slice(0,10);
+  let h='<div class="tl">';
+  Object.entries(grp).sort((a,b)=>a[0].localeCompare(b[0])).forEach(([dt,evs])=>{
+    const d=new Date(dt+'T12:00:00'),day=d.getDate(),mon=d.toLocaleString('en',{month:'short'}).toUpperCase(),isT=dt===today;
+    h+=`<div class="tld"><div class="tldh"><div class="tlc"><span class="fh" style="font-weight:700;font-size:.95rem;color:${isT?'var(--pri)':'var(--on-sv)'}">${day}</span><span style="font-size:7px;text-transform:uppercase;letter-spacing:.15em" class="tm">${mon}</span></div><span class="fh" style="font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:${isT?'var(--on-s)':'var(--on-sv)'};font-size:.75rem">${isT?'Hoy':'Próximo'}</span></div>`;
+    evs.forEach(ev=>{
+      const i=P.find(p=>p.t===ev.symbol)||{n:ev.symbol};
+      const eps=ev.epsEstimated!=null?`EPS est: $${ev.epsEstimated}`:'';
+      const rev=ev.revenueEstimated!=null?` · Rev: $${(ev.revenueEstimated/1e9).toFixed(1)}B`:'';
+      h+=`<div class="ecard"><div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px"><div><span class="badge bg">Earnings</span><h3 class="fh" style="font-weight:800;font-size:1rem;margin-top:4px">${i.n} (${ev.symbol})</h3></div><span style="font-size:.68rem" class="tm">${ev.time==='bmo'?'Pre-market':ev.time==='amc'?'After-close':''}</span></div><p style="font-size:.72rem;line-height:1.4" class="tm">${eps}${rev}</p></div>`;
+    });
+    h+='</div>';
+  });
+  h+='</div>';el.innerHTML=h;
+}
+
+/* ═══════════════════════════════════════════
+   RENDER: INSIDERS
+   ═══════════════════════════════════════════ */
+function renderIns(){
+  const el=document.getElementById('insC');
+  if(!insiders.length){el.innerHTML='<div style="text-align:center;padding:36px" class="tm"><span class="material-symbols-outlined mi" style="font-size:40px;display:block;margin-bottom:8px">group_off</span>No hay datos insider.</div>';return}
+  const buys=insiders.filter(i=>(i.acquistionOrDisposition||'').toUpperCase()==='A');
+  const sells=insiders.filter(i=>!buys.includes(i));
+  let h=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px">
+    <div style="background:var(--sc-hi);border-radius:12px;padding:14px;text-align:center"><p style="font-size:8px;text-transform:uppercase;letter-spacing:.1em;margin-bottom:3px" class="tm">Compras</p><p class="fh tg" style="font-size:1.5rem;font-weight:800">${buys.length}</p></div>
+    <div style="background:var(--sc-hi);border-radius:12px;padding:14px;text-align:center"><p style="font-size:8px;text-transform:uppercase;letter-spacing:.1em;margin-bottom:3px" class="tm">Ventas</p><p class="fh tr" style="font-size:1.5rem;font-weight:800">${sells.length}</p></div>
+  </div>
+  <div style="background:var(--sc-low);border-radius:12px;padding:12px;overflow-x:auto">
+    <h3 class="fh" style="font-size:.88rem;font-weight:700;margin-bottom:10px;display:flex;align-items:center;gap:5px"><span class="material-symbols-outlined mi" style="color:var(--pri);font-size:18px">group</span>Actividad Reciente</h3>
+    <table class="itable"><thead><tr><th>Insider</th><th>Ticker</th><th>Tipo</th><th style="text-align:right">Fecha</th></tr></thead><tbody>`;
+  insiders.slice(0,20).forEach(i=>{
+    const ib=buys.includes(i);
+    h+=`<tr><td><p style="font-weight:700;font-size:.7rem">${i.reportingName||'—'}</p><p style="font-size:8px" class="tm">${i.typeOfOwner||''}</p></td><td style="font-weight:600;font-size:.7rem">${i.symbol||'—'}</td><td><span class="badge ${ib?'bb':'bg'}">${ib?'Buy':'Sell'}</span></td><td style="text-align:right;font-size:9px" class="tm">${i.transactionDate||'—'}</td></tr>`;
+  });
+  h+='</tbody></table></div>';el.innerHTML=h;
+}
+
+function renderAll(){renderDash();renderWL();renderEv();renderIns()}
+
+/* ═══════════════════════════════════════════
+   UI WIRING
+   ═══════════════════════════════════════════ */
+document.getElementById('refreshBtn').addEventListener('click',refresh);
+
+// Mode toggle — if switching to API and no key, show modal
+document.getElementById('modeBtn').addEventListener('click',()=>{
+  if(useMock && !API_KEY){
+    showKeyModal(); return;
+  }
+  useMock=!useMock;
+  localStorage.setItem('sl_mock',useMock?'true':'false');
+  refresh();
+});
+
+// Key modal
+function showKeyModal(){
+  const m=document.getElementById('keyModal');
+  document.getElementById('keyInput').value=API_KEY;
+  m.style.display='flex';
+}
+document.getElementById('keyBtn').addEventListener('click',showKeyModal);
+document.getElementById('keyClose').addEventListener('click',()=>{document.getElementById('keyModal').style.display='none'});
+document.getElementById('keySave').addEventListener('click',()=>{
+  const k=document.getElementById('keyInput').value.trim();
+  if(!k)return;
+  API_KEY=k;
+  localStorage.setItem('sl_apikey',k);
+  document.getElementById('keyModal').style.display='none';
+  // Switch to API mode automatically
+  useMock=false;
+  localStorage.setItem('sl_mock','false');
+  refresh();
+});
+document.getElementById('keyModal').addEventListener('click',e=>{
+  if(e.target===document.getElementById('keyModal'))document.getElementById('keyModal').style.display='none';
+});
+
+// INIT
+refresh();
+
+if('serviceWorker' in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(e=>console.log('SW:',e)));
+})();
+</script>
+</body>
+</html>
