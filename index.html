@@ -475,10 +475,45 @@ async function runDiag(){
   if(window.matchMedia('(display-mode: standalone)').matches)r.push(info('App ya ejecutándose como PWA standalone'));
   else r.push(info('Ejecutándose en navegador (no instalada)'));
 
-  // 6. General info
+  // 6. API TEST
+  r.push('<div style="margin:10px 0 4px;font-weight:700;color:var(--os);border-top:1px solid var(--ov);padding-top:8px">🔌 Test API (FMP)</div>');
+  const key=localStorage.getItem('sl_ak')||'';
+  if(!key){r.push(warn('No hay API key guardada. Pulsa 🔑 para introducirla.'))}
+  else{
+    r.push(info('API Key: '+key.slice(0,6)+'...'+key.slice(-4)));
+    const endpoints=[
+      {name:'Quote (AAPL)',url:`/stable/quote?symbol=AAPL&apikey=${key}`},
+      {name:'Batch Quote',url:`/stable/batch-quote?symbols=AAPL,AMZN&apikey=${key}`},
+      {name:'Quote Short',url:`/stable/quote-short?symbol=AAPL&apikey=${key}`},
+      {name:'Forex EUR/USD',url:`/stable/quote?symbol=EURUSD&apikey=${key}`},
+      {name:'Earning Calendar',url:`/stable/earning-calendar?from=2026-03-01&to=2026-06-01&apikey=${key}`},
+      {name:'Insider Trading',url:`/stable/insider-trading?symbol=AAPL&limit=3&apikey=${key}`},
+      {name:'Profile',url:`/stable/profile?symbol=AAPL&apikey=${key}`},
+    ];
+    for(const ep of endpoints){
+      try{
+        const resp=await fetch('https://financialmodelingprep.com'+ep.url);
+        const body=await resp.text();
+        if(resp.ok){
+          const json=JSON.parse(body);
+          const isArr=Array.isArray(json);
+          const len=isArr?json.length:1;
+          const sample=isArr&&json[0]?JSON.stringify(json[0]).slice(0,80)+'…':body.slice(0,80);
+          r.push(ok(`${ep.name} → ${resp.status} (${len} items)`));
+          r.push(info(`<span style="font-size:.6rem;word-break:break-all">${sample}</span>`));
+        }else{
+          r.push(fail(`${ep.name} → HTTP ${resp.status}`));
+          r.push(info(`<span style="font-size:.6rem;word-break:break-all">${body.slice(0,120)}</span>`));
+        }
+      }catch(e){r.push(fail(`${ep.name} → Error: ${e.message}`))}
+    }
+  }
+
+  // 7. General info
+  r.push('<div style="margin:10px 0 4px;font-weight:700;color:var(--os);border-top:1px solid var(--ov);padding-top:8px">📋 Info general</div>');
   r.push(info('URL: '+location.href));
-  r.push(info('User Agent: '+navigator.userAgent));
-  r.push(info('Protocolo: '+location.protocol));
+  r.push(info('Protocol: '+location.protocol));
+  r.push(info('UA: <span style="font-size:.55rem;word-break:break-all">'+navigator.userAgent+'</span>'));
 
   document.getElementById('diagResults').innerHTML=r.join('');
 }
