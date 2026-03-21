@@ -91,6 +91,7 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--o
 <header class="tb">
   <b>Sovereign Ledger</b>
   <div style="display:flex;gap:1px">
+    <button id="diagBtn"><span class="material-symbols-outlined mi" style="font-size:18px">install_mobile</span></button>
     <button id="keyBtn"><span class="material-symbols-outlined mi" style="font-size:18px">key</span></button>
     <button id="modeBtn"><span class="material-symbols-outlined mi" style="font-size:18px">science</span></button>
     <button id="refreshBtn"><span class="material-symbols-outlined mi" style="font-size:18px">sync</span></button>
@@ -112,6 +113,16 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--o
   <p>Introduce tu key de <a href="https://site.financialmodelingprep.com/register" target="_blank" style="color:var(--p)">Financial Modeling Prep</a> (gratis). Se guarda solo en tu dispositivo.</p>
   <input id="keyIn" placeholder="API key de FMP..." type="text"/>
   <div style="display:flex;gap:6px"><button class="mbtn" style="flex:1;background:var(--p);color:var(--op)" id="keySave">Guardar</button><button class="mbtn" style="background:var(--st);color:var(--osv)" id="keyX">Cerrar</button></div>
+</div></div>
+
+<!-- PWA Diagnostic modal -->
+<div class="modal" id="diagModal"><div style="max-height:80vh;overflow-y:auto">
+  <h2>🔧 Diagnóstico PWA</h2>
+  <div id="diagResults" style="font-size:.75rem;line-height:1.6"></div>
+  <div style="margin-top:12px;display:flex;gap:6px">
+    <button class="mbtn" style="flex:1;background:var(--p);color:var(--op)" id="diagInstall">Forzar Instalación</button>
+    <button class="mbtn" style="background:var(--st);color:var(--osv)" id="diagX">Cerrar</button>
+  </div>
 </div></div>
 
 <!-- ═══ DASHBOARD ═══ -->
@@ -382,6 +393,7 @@ let deferredPrompt=null;
 window.addEventListener('beforeinstallprompt',e=>{
   e.preventDefault();deferredPrompt=e;
   document.getElementById('installBar').classList.add('show');
+  console.log('✅ beforeinstallprompt fired');
 });
 document.getElementById('installBtn').addEventListener('click',async()=>{
   if(!deferredPrompt)return;
@@ -392,6 +404,102 @@ document.getElementById('installBtn').addEventListener('click',async()=>{
 });
 document.getElementById('installClose').addEventListener('click',()=>document.getElementById('installBar').classList.remove('show'));
 window.addEventListener('appinstalled',()=>document.getElementById('installBar').classList.remove('show'));
+
+/* ═══ PWA DIAGNOSTIC ═══ */
+async function runDiag(){
+  const r=[];
+  const ok=t=>`<div style="color:var(--t)">✅ ${t}</div>`;
+  const fail=t=>`<div style="color:var(--e)">❌ ${t}</div>`;
+  const warn=t=>`<div style="color:#f0c040">⚠️ ${t}</div>`;
+  const info=t=>`<div style="color:var(--osv)">ℹ️ ${t}</div>`;
+
+  // 1. HTTPS
+  if(location.protocol==='https:')r.push(ok('HTTPS activo'));
+  else if(location.hostname==='localhost'||location.hostname==='127.0.0.1')r.push(warn('HTTP en localhost (OK para dev, no para instalar en móvil)'));
+  else r.push(fail('No HTTPS — Chrome requiere HTTPS para instalar PWAs. URL: '+location.protocol+'//'+location.host));
+
+  // 2. Manifest
+  const link=document.querySelector('link[rel="manifest"]');
+  if(link){
+    r.push(ok('Link a manifest encontrado: '+link.href));
+    try{
+      const resp=await fetch(link.href);
+      if(resp.ok){
+        const m=await resp.json();
+        r.push(ok('Manifest descargado correctamente'));
+        if(m.name)r.push(ok('name: "'+m.name+'"'));else r.push(fail('Falta "name" en manifest'));
+        if(m.short_name)r.push(ok('short_name: "'+m.short_name+'"'));else r.push(warn('Falta "short_name"'));
+        if(m.start_url)r.push(ok('start_url: "'+m.start_url+'"'));else r.push(fail('Falta "start_url"'));
+        if(m.display&&m.display!=='browser')r.push(ok('display: "'+m.display+'"'));else r.push(fail('display debe ser "standalone" o "fullscreen", no "'+m.display+'"'));
+        if(m.icons&&m.icons.length>0){
+          r.push(ok(m.icons.length+' iconos definidos'));
+          const has192=m.icons.some(i=>i.sizes&&i.sizes.includes('192'));
+          const has512=m.icons.some(i=>i.sizes&&i.sizes.includes('512'));
+          if(has192)r.push(ok('Icono 192px encontrado'));else r.push(fail('Falta icono 192x192'));
+          if(has512)r.push(ok('Icono 512px encontrado'));else r.push(fail('Falta icono 512x512'));
+          // Test icon fetch
+          for(const ic of m.icons){
+            try{
+              const icUrl=new URL(ic.src,link.href).href;
+              const icR=await fetch(icUrl,{method:'HEAD'});
+              if(icR.ok)r.push(ok('Icono accesible: '+ic.sizes));
+              else r.push(fail('Icono NO accesible ('+icR.status+'): '+icUrl));
+            }catch(e){r.push(fail('Error cargando icono: '+e.message))}
+          }
+        }else r.push(fail('No hay iconos en manifest'));
+      }else r.push(fail('Manifest respondió HTTP '+resp.status));
+    }catch(e){r.push(fail('Error descargando manifest: '+e.message))}
+  }else r.push(fail('No hay <link rel="manifest"> en el HTML'));
+
+  // 3. Service Worker
+  if('serviceWorker' in navigator){
+    r.push(ok('Service Worker soportado por el navegador'));
+    const regs=await navigator.serviceWorker.getRegistrations();
+    if(regs.length>0){
+      r.push(ok(regs.length+' Service Worker(s) registrado(s)'));
+      regs.forEach(reg=>{
+        r.push(info('SW scope: '+reg.scope));
+        if(reg.active)r.push(ok('SW activo: state='+reg.active.state));
+        else if(reg.installing)r.push(warn('SW instalándose...'));
+        else if(reg.waiting)r.push(warn('SW esperando activación'));
+        else r.push(fail('SW registrado pero sin worker activo'));
+      });
+    }else r.push(fail('Ningún Service Worker registrado'));
+  }else r.push(fail('Service Worker NO soportado'));
+
+  // 4. beforeinstallprompt
+  if(deferredPrompt)r.push(ok('beforeinstallprompt capturado — se puede instalar'));
+  else r.push(warn('beforeinstallprompt NO se ha disparado. Posibles causas: ya instalada, criterios no cumplidos, o Chrome aún evaluando'));
+
+  // 5. Display mode
+  if(window.matchMedia('(display-mode: standalone)').matches)r.push(info('App ya ejecutándose como PWA standalone'));
+  else r.push(info('Ejecutándose en navegador (no instalada)'));
+
+  // 6. General info
+  r.push(info('URL: '+location.href));
+  r.push(info('User Agent: '+navigator.userAgent));
+  r.push(info('Protocolo: '+location.protocol));
+
+  document.getElementById('diagResults').innerHTML=r.join('');
+}
+
+document.getElementById('diagBtn').addEventListener('click',()=>{
+  document.getElementById('diagResults').innerHTML='<p>Analizando...</p>';
+  document.getElementById('diagModal').classList.add('show');
+  setTimeout(runDiag,300);
+});
+document.getElementById('diagX').addEventListener('click',()=>document.getElementById('diagModal').classList.remove('show'));
+document.getElementById('diagInstall').addEventListener('click',async()=>{
+  if(deferredPrompt){
+    deferredPrompt.prompt();
+    const{outcome}=await deferredPrompt.userChoice;
+    document.getElementById('diagResults').innerHTML+='<div style="color:var(--t);margin-top:8px">Resultado: '+outcome+'</div>';
+    deferredPrompt=null;
+  }else{
+    document.getElementById('diagResults').innerHTML+='<div style="color:var(--e);margin-top:8px">No hay prompt disponible. Chrome no considera la app instalable aún. Revisa los errores arriba.</div>';
+  }
+});
+document.getElementById('diagModal').addEventListener('click',e=>{if(e.target===document.getElementById('diagModal'))document.getElementById('diagModal').classList.remove('show')});
 
 /* ═══ INIT ═══ */
 refresh();
