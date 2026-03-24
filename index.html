@@ -257,7 +257,7 @@ const cl=v=>v>=0?'tg':'tr',sg=v=>(v>=0?'+':'')+f(v)+'%';
 function st(){const n=new Date().toLocaleString('es-ES',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});['uD','uW','uE','uI'].forEach(i=>{const e=document.getElementById(i);if(e)e.textContent='Actualizado: '+n})}
 function mb(){
   const fxInfo=` · 1€=${f(eur,4)}$`;
-  const h=mock?'<div class="mb" style="background:var(--sec);color:var(--osec)"><span class="material-symbols-outlined mi" style="font-size:14px">science</span>Datos de prueba</div>':'<div class="mb" style="background:var(--tc);color:var(--t)"><span class="material-symbols-outlined mi" style="font-size:14px">cloud_done</span>API en vivo'+fxInfo+'</div>';
+  const h=mock?'<div class="mb" style="background:var(--sec);color:var(--osec)"><span class="material-symbols-outlined mi" style="font-size:14px">science</span>Datos de prueba</div>':'<div class="mb" style="background:var(--tc);color:var(--t)"><span class="material-symbols-outlined mi" style="font-size:14px">cloud_done</span>Precios en vivo'+fxInfo+' · Events/Insiders: demo</div>';
   ['mbD','mbW','mbE','mbI'].forEach(i=>{const e=document.getElementById(i);if(e)e.innerHTML=h});
 }
 function en(){return P.map(p=>{const q=Q[p.t]||{};const c=prE(p.t,q.price||0),v=c*p.sh,pl=v-p.inv,pp=p.inv?((v/p.inv)-1)*100:0;return{...p,q,c,v,pl,pp,dc:q.changesPercentage||0}})}
@@ -279,17 +279,28 @@ async function loadAPI(){
         if(d?.rates?.USD){eur=d.rates.USD;fxOk=true;console.log('FX from er-api:',eur)}
       }catch(e){console.warn('Fallback FX failed:',e)}
     }
-    try{const r=await api('/quote?symbol=GBPEUR');const d=Array.isArray(r)?r[0]:r;if(d?.price)gbp=d.price}catch(e){}
+    // GBP for AGED.L
+    try{const r=await api('/quote?symbol=GBPEUR');const d=Array.isArray(r)?r[0]:r;if(d?.price)gbp=d.price}catch(e){
+      try{const r=await fetch('https://open.er-api.com/v6/latest/GBP');const d=await r.json();if(d?.rates?.EUR)gbp=d.rates.EUR}catch(e2){}
+    }
     console.log('EUR/USD:',eur,'GBP/EUR:',gbp);
 
-    const ts=P.filter(p=>!p.t.includes('.')).map(p=>p.t).join(',');
-    try{const r=await api(`/batch-quote?symbols=${ts}`);if(Array.isArray(r))r.forEach(q=>{if(q.symbol)Q[q.symbol]=q})}catch(e){
-      for(const p of P){if(p.t.includes('.'))continue;try{const r=await api(`/quote?symbol=${p.t}`);const d=Array.isArray(r)?r[0]:r;if(d?.symbol)Q[d.symbol]=d}catch(e2){}}
+    // Quotes: individual calls only (batch-quote is 402 on free plan)
+    let loaded=0;
+    for(const p of P){
+      try{
+        const r=await api(`/quote?symbol=${p.t}`);
+        const d=Array.isArray(r)?r[0]:r;
+        if(d?.symbol){Q[d.symbol]=d;loaded++}
+        else if(d?.price){d.symbol=p.t;Q[p.t]=d;loaded++}
+      }catch(e){console.warn('Quote failed for',p.t,e.message)}
     }
-    try{const r=await api('/quote?symbol=AGED.L');const d=Array.isArray(r)?r[0]:r;if(d?.symbol)Q['AGED.L']=d}catch(e){}
-    const d0=new Date(),d1=new Date(d0);d1.setDate(d1.getDate()+90);
-    try{const r=await api(`/earning-calendar?from=${d0.toISOString().slice(0,10)}&to=${d1.toISOString().slice(0,10)}`);if(Array.isArray(r)){const tk=new Set(P.map(p=>p.t));EV=r.filter(e=>tk.has(e.symbol))}}catch(e){EV=MEV}
-    try{let a=[];for(const p of P){if(p.t.includes('.'))continue;try{const r=await api(`/insider-trading?symbol=${p.t}&limit=5`);if(Array.isArray(r))a=a.concat(r)}catch(e){}}INS=a.length?a.sort((a,b)=>new Date(b.transactionDate||0)-new Date(a.transactionDate||0)):MINS}catch(e){INS=MINS}
+    console.log('Loaded quotes:',loaded,'/',P.length);
+
+    // Events & Insiders: 404 on free plan, use mock data
+    EV=MEV;
+    INS=MINS;
+
     st();mb();renderAll();
   }catch(e){console.error(e);mock=true;localStorage.setItem('sl_m','true');loadMock()}
 }
